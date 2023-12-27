@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
 
 
 let camera, scene, renderer;
 let controller;
 let raycaster, cursor, tags = [];
-let box
+let box, bathroom;
 
 init();
 animate();
@@ -16,13 +17,36 @@ function init() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
+  // loading bathroom object
+  const loader = new OBJLoader();
+  loader
+    .load(
+      // resource URL
+      'bathroom.obj',
+      // called when resource is loaded
+      function (object) {
+        // object.rotateZ(Math.PI);
+        bathroom = object
+        object.scale.set(0.001, 0.001, 0.001);
+        scene.add(object);
+      },
+      // called when loading is in progresses
+      function (xhr) {
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+      },
+      // called when loading has errors
+      function (error) {
+        console.log('An error happened');
+      }
+    );
+
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
 
   // Create a box geometry and material
   const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5); // Size of the box
-  const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00 }); // Green color
+  const boxMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff00, side: THREE.DoubleSide }); // Green color
   box = new THREE.Mesh(boxGeometry, boxMaterial);
   box.position.set(0, 0.1, -2);
   scene.add(box);
@@ -83,13 +107,13 @@ function updateRaycaster() {
   raycaster.setFromCamera({ x: 0, y: 0 }, camera);
 
   // Check for intersections with the box
-  const intersects = raycaster.intersectObjects([box]);
+  const intersects = raycaster.intersectObjects([box, bathroom]);
 
   if (intersects.length > 0) {
     const closestIntersection = intersects[0]; // Assuming closest intersection is what we want
-
+    const offsetPoint = closestIntersection.point.add(closestIntersection.face.normal.multiplyScalar(0.001)); // Add a small offset
     // Adjust the plane's orientation and position
-    cursor.position.copy(closestIntersection.point);
+    cursor.position.copy(offsetPoint);
     cursor.lookAt(closestIntersection.face.normal.add(closestIntersection.point));
     cursor.visible = true; // Make the plane visible
   } else {

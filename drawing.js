@@ -1,6 +1,8 @@
 import { fabric } from "fabric";
+import axios from 'axios'
 
 var $ = function (id) { return document.getElementById(id) };
+const canvasElement = document.getElementById('c');
 
 var canvas = new fabric.Canvas('c', {
     isDrawingMode: true
@@ -21,18 +23,30 @@ var drawingModeEl = $('drawing-mode'),
 clearEl.onclick = function () { canvas.clear() };
 
 saveBtn.onclick = function () {
-    var dataURL = canvas.toDataURL({
-        format: 'png',
-        multiplier: 4,
-        left: 0,
-        top: 0,
-        width: canvas.width,
-        height: canvas.height,
-    });
-    var link = document.createElement('a');
-    link.download = 'my-image.png';
-    link.href = dataURL;
-    link.click();
+    // var dataURL = canvas.toDataURL({
+    //     format: 'png',
+    //     multiplier: 4,
+    //     left: 0,
+    //     top: 0,
+    //     width: canvas.width,
+    //     height: canvas.height,
+    // });
+
+    const blob = canvasElement.toBlob((blob) => {
+        const formData = new FormData();
+        formData.append('upload', blob, 'image.png');
+
+        // Post via axios or other transport method
+        axios.post('/upload', formData);
+    })
+
+    console.log(blob)
+
+    // var link = document.createElement('a');
+    // link.download = 'my-image.png';
+    // link.href = dataURL;
+    // link.click();
+
 }
 
 drawingModeEl.onclick = function () {
